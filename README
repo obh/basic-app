@@ -1,0 +1,15 @@
+# Setup
+CREATE TABLE Services (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255),
+  description TEXT,
+  versions INT,
+  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+# Test cases
+> 1. can there be a service without a serviceVersion? 
+No, assuming that serviceversion will always be present. If not, that service won't show up in the /services API and other API results will be invalid.
+
+> 
