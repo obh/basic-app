@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"math"
+	"net/http"
 	"net/url"
 	"regexp"
 	"services/models"
@@ -28,12 +29,12 @@ const MAX_LIMIT = 100
 // /services?from=1&count=10&filterBy=test&orderBy=created_on&orderType=desc
 
 type serviceHandler struct {
-	catalogSvc service.CatalogService
-	validate   *validator.Validate
+	serviceController service.ServiceController
+	validate          *validator.Validate
 }
 
-func InitServiceHandler(e *echo.Echo, svc service.CatalogService, v *validator.Validate) error {
-	s := &serviceHandler{catalogSvc: svc, validate: v}
+func InitServiceHandler(e *echo.Echo, svc service.ServiceController, v *validator.Validate) error {
+	s := &serviceHandler{serviceController: svc, validate: v}
 
 	e.Add("GET", "/services", s.getServices)
 	e.Add("GET", "/services/:id", s.getService)
@@ -49,26 +50,29 @@ func (h *serviceHandler) getServices(c echo.Context) error {
 			models.BadRequest{BaseError: models.BaseError{ErrType: models.ErrBadRequest, Detail: err.Error()}})
 	}
 	log.Info("verified request, going forward")
-	resp, err := h.catalogSvc.GetServices(c.Request().Context(), *req)
+	resp, err := h.serviceController.GetServices(c.Request().Context(), *req)
 	resp.Request = *req
 	if err != nil {
 		fmt.Println(err)
-		return getErrorJSON(c, errors.New(models.ErrInternalServerError))
+		return getErrorJSON(c, models.InternalServerError{BaseError: models.BaseError{
+			ErrType: models.ErrInternalServerError, Detail: err.Error()}})
 	}
-	return c.JSON(200, resp)
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (h *serviceHandler) getService(c echo.Context) error {
 	id := c.Param(serviceIdPathParam)
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return getErrorJSON(c, errors.New(models.ErrBadRequestParams))
+		return getErrorJSON(c,
+			models.BadRequest{BaseError: models.BaseError{ErrType: models.ErrBadRequest, Detail: err.Error()}})
 	}
-	s, err := h.catalogSvc.GetService(c.Request().Context(), int(idInt))
+	s, err := h.serviceController.GetService(c.Request().Context(), int(idInt))
 	if s == nil {
-		return getErrorJSON(c, errors.New(models.ErrBadRequestServiceId))
+		return getErrorJSON(c, models.ResourceNotFound{BaseError: models.BaseError{
+			ErrType: models.ErrBadRequestServiceId, Detail: models.ErrBadRequestServiceId}})
 	}
-	return c.JSON(200, s)
+	return c.JSON(http.StatusOK, s)
 }
 
 func (h *serviceHandler) getReqParams(c echo.Context) (*models.RequestParams, error) {
@@ -92,7 +96,6 @@ func (h *serviceHandler) getReqParams(c echo.Context) (*models.RequestParams, er
 		Limit:         limit,
 		FilterBy:      html.EscapeString(c.QueryParams().Get(filterByQuery)),
 	}
-	fmt.Println("Request --> ", r)
 	err = validate(r, h.validate)
 	if err != nil {
 		return nil, err

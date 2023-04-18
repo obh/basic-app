@@ -17,9 +17,9 @@ type ServiceVersion struct {
 	CreatedOn time.Time `json:"created_on"`
 }
 
-type CatalogResponse struct {
-	Services []Service     `json:"services"`
-	Count    int           `json:"count"`
-	Size     int           `json:"size"`
-	Request  RequestParams `json:"request"`
+type Services struct {
+	Items   []Service     `json:"services"`
+	Count   int           `json:"count"`
+	Size    int           `json:"size"`
+	Request RequestParams `json:"request"`
 }

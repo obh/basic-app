@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"os"
 	"services/ent"
 	"services/repo"
 	"services/routes"
@@ -19,16 +20,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	catalogRepo := repo.ConfigureMySQLServiceRepo(client)
-	serviceversionRepo := repo.ConfigureMySQLServiceVersionRepo(client)
-	catalogSvc := service.ConfigureServiceImpl(catalogRepo, serviceversionRepo)
+	servicesRepo := repo.ConfigureMySQLServicesRepo(client)
+	serviceVersionsRepo := repo.ConfigureMySQLServiceVersionsRepo(client)
+	servicesController := service.ConfigureServiceController(servicesRepo, serviceVersionsRepo)
 	v := validator.New()
-	routes.InitServiceHandler(e, catalogSvc, v)
+	routes.InitServiceHandler(e, servicesController, v)
 	e.Start(":1323")
 }
 
 func ConnectDB() (*ent.Client, error) {
-	dsn := "root:cashfree.123@tcp(localhost:3306)/test?parseTime=true"
+	dsn := os.Getenv("MYSQL_DSN")
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err

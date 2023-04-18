@@ -5,7 +5,7 @@ import (
 	"services/models"
 )
 
-type CatalogService interface {
-	GetServices(c context.Context, req models.RequestParams) (*models.CatalogResponse, error)
+type ServiceController interface {
+	GetServices(c context.Context, req models.RequestParams) (*models.Services, error)
 	GetService(c context.Context, id int) (*models.Service, error)
 }

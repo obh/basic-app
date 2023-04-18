@@ -37,7 +37,7 @@ var (
 
 	ErrBadRequest          = "Bad Request"
 	ErrInternalServerError = "Internal Server Error"
-	ErrBadRequestServiceId = "Bad request, Service ID doesn't exist"
+	ErrBadRequestServiceId = "Bad request, ServiceID not found"
 	ErrBadRequestParams    = "Bad request, Input validation failed"
 	ErrUnknown             = "Unknown error occured - mostly some uncaptured scenario"
 )

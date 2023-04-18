@@ -2,53 +2,52 @@ package service
 
 import (
 	"context"
-	"errors"
 	"services/ent"
 	"services/models"
 	"services/repo"
 )
 
-type catalogServiceImpl struct {
-	catalogRepo repo.CatalogRepo
-	versionRepo repo.ServiceVersions
+type serviceControllerImpl struct {
+	servicesRepo        repo.ServicesRepo
+	serviceVersionsRepo repo.ServiceVersions
 }
 
-func ConfigureServiceImpl(r repo.CatalogRepo, s repo.ServiceVersions) CatalogService {
-	return &catalogServiceImpl{catalogRepo: r, versionRepo: s}
+func ConfigureServiceController(r repo.ServicesRepo, s repo.ServiceVersions) ServiceController {
+	return &serviceControllerImpl{servicesRepo: r, serviceVersionsRepo: s}
 }
 
-func (c *catalogServiceImpl) GetServices(ctx context.Context, req models.RequestParams) (*models.CatalogResponse, error) {
-	services, err := c.catalogRepo.GetServices(ctx, req)
+func (c *serviceControllerImpl) GetServices(ctx context.Context, req models.RequestParams) (*models.Services, error) {
+	services, err := c.servicesRepo.GetAll(ctx, req)
 	if err != nil {
-		return nil, errors.New(models.ErrInternalServerError)
+		return nil, err
 	}
 	ids := []int{}
 	for _, s := range services {
 		ids = append(ids, s.ID)
 	}
-	counts, err := c.versionRepo.GetVersionCountForServices(ctx, ids)
+	counts, err := c.serviceVersionsRepo.GetServiceVersionCounts(ctx, ids)
 	if err != nil {
-		return nil, errors.New(models.ErrInternalServerError)
+		return nil, err
 	}
 	itemMap := make(map[int]int)
 	for _, item := range counts {
 		itemMap[item.ServiceId] = item.Count
 	}
 	svcJson := serviceMapper(services, itemMap)
-	size, err := c.catalogRepo.GetCount(ctx, req)
+	size, err := c.servicesRepo.GetCount(ctx, req)
 	if err != nil {
-		return nil, errors.New(models.ErrInternalServerError)
+		return nil, err
 	}
-	resp := &models.CatalogResponse{Services: svcJson, Size: size, Count: len(services)}
+	resp := &models.Services{Items: svcJson, Size: size, Count: len(services)}
 	return resp, nil
 }
 
-func (c *catalogServiceImpl) GetService(ctx context.Context, id int) (*models.Service, error) {
-	s, err := c.catalogRepo.GetService(ctx, id)
+func (c *serviceControllerImpl) GetService(ctx context.Context, id int) (*models.Service, error) {
+	s, err := c.servicesRepo.GetById(ctx, id)
 	if err != nil {
-		return nil, errors.New(models.ErrInternalServerError)
+		return nil, err
 	}
-	v, err := c.versionRepo.GetVersionsForService(ctx, id)
+	v, err := c.serviceVersionsRepo.GetAll(ctx, id)
 	return responseMapper(s, v), nil
 }
 

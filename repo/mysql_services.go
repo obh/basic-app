@@ -7,18 +7,18 @@ import (
 	"services/models"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/labstack/gommon/log"
 )
 
-type catalogRepoMysql struct {
+type mySQLServicesRepo struct {
 	entClient *ent.Client
 }
 
-func ConfigureMySQLServiceRepo(c *ent.Client) CatalogRepo {
-	return &catalogRepoMysql{entClient: c}
+func ConfigureMySQLServicesRepo(c *ent.Client) ServicesRepo {
+	return &mySQLServicesRepo{entClient: c}
 }
 
-// can be optimized further
-func (c *catalogRepoMysql) GetServices(ctx context.Context, req models.RequestParams) ([]*ent.Service, error) {
+func (c *mySQLServicesRepo) GetAll(ctx context.Context, req models.RequestParams) ([]*ent.Service, error) {
 	q := c.entClient.Debug().Service.Query()
 
 	q = addWhereClause(q, &req)
@@ -33,17 +33,18 @@ func (c *catalogRepoMysql) GetServices(ctx context.Context, req models.RequestPa
 	return services, nil
 }
 
-func (c *catalogRepoMysql) GetService(ctx context.Context, id int) (*ent.Service, error) {
-	services, err := c.entClient.Service.Query().
+func (c *mySQLServicesRepo) GetById(ctx context.Context, id int) (*ent.Service, error) {
+	services, err := c.entClient.Debug().Service.Query().
 		Where(service.IDEQ(id)).
 		First(ctx)
 	if err != nil {
+		log.Info("GetService:: failed in getting data ", err)
 		return nil, err
 	}
 	return services, nil
 }
 
-func (c *catalogRepoMysql) GetCount(ctx context.Context, req models.RequestParams) (int, error) {
+func (c *mySQLServicesRepo) GetCount(ctx context.Context, req models.RequestParams) (int, error) {
 	q := c.entClient.Service.Query()
 	q = addWhereClause(q, &req)
 	q = addFilterBy(q, &req)

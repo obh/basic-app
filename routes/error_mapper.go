@@ -17,13 +17,16 @@ func getErrorJSON(c echo.Context, err error) error {
 			return c.JSON(http.StatusBadRequest,
 				models.ResponseError{Title: models.TitleRequestInvalid, Detail: be.Detail},
 			)
-		} else if be.ErrType == models.ErrBadRequestServiceId {
-			return c.JSON(http.StatusBadRequest,
-				models.ResponseError{Title: models.TitleResourceNotFound, Detail: be.Detail},
-			)
 		} else if be.ErrType == models.ErrBadRequest {
 			return c.JSON(http.StatusBadRequest,
 				models.ResponseError{Title: models.TitleRequestInvalid, Detail: be.Detail},
+			)
+		}
+	case models.ResourceNotFound:
+		be := err.(models.ResourceNotFound)
+		if be.ErrType == models.ErrBadRequestServiceId {
+			return c.JSON(http.StatusNotFound,
+				models.ResponseError{Title: models.TitleResourceNotFound, Detail: be.Detail},
 			)
 		}
 	}

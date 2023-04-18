@@ -22,23 +22,22 @@ import (
 )
 
 func Init() *echo.Echo {
-	// Echo instance
 	e := echo.New()
 	client, err := ConnectDB()
 	if err != nil {
 		panic(err)
 	}
-	catalogRepo := repo.ConfigureMySQLServiceRepo(client)
-	serviceversionRepo := repo.ConfigureMySQLServiceVersionRepo(client)
-	catalogSvc := service.ConfigureServiceImpl(catalogRepo, serviceversionRepo)
+	servicesRepo := repo.ConfigureMySQLServicesRepo(client)
+	serviceVersionsRepo := repo.ConfigureMySQLServiceVersionsRepo(client)
+	servicesController := service.ConfigureServiceController(servicesRepo, serviceVersionsRepo)
 	v := validator.New()
 
-	routes.InitServiceHandler(e, catalogSvc, v)
+	routes.InitServiceHandler(e, servicesController, v)
 	return e
 }
 
 func ConnectDB() (*ent.Client, error) {
-	dsn := "root:cashfree.123@tcp(localhost:3306)/test?parseTime=true"
+	dsn := os.Getenv("MYSQL_DSN")
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
@@ -82,15 +81,15 @@ func TestDefaultServices(t *testing.T) {
 	t.Log("Starting TestDefaultServices")
 	// call endpoint using http
 	url := "http://localhost:1323/services"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 4)
-	assert.Equal(t, resp.Services[0].Id, 4)
-	assert.Equal(t, resp.Services[1].Id, 3)
-	assert.Equal(t, resp.Services[2].Id, 2)
-	assert.Equal(t, resp.Services[3].Id, 1)
+	assert.Equal(t, len(resp.Items), 4)
+	assert.Equal(t, resp.Items[0].Id, 4)
+	assert.Equal(t, resp.Items[1].Id, 3)
+	assert.Equal(t, resp.Items[2].Id, 2)
+	assert.Equal(t, resp.Items[3].Id, 1)
 	t.Log("Ok")
 }
 
@@ -98,13 +97,13 @@ func TestServicesLimit(t *testing.T) {
 	t.Log("Starting TestServicesLimit")
 	// call endpoint using http
 	url := "http://localhost:1323/services?limit=2"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 2)
-	assert.Equal(t, resp.Services[0].Id, 4)
-	assert.Equal(t, resp.Services[1].Id, 3)
+	assert.Equal(t, len(resp.Items), 2)
+	assert.Equal(t, resp.Items[0].Id, 4)
+	assert.Equal(t, resp.Items[1].Id, 3)
 	t.Log("Ok")
 }
 
@@ -112,13 +111,13 @@ func TestServicesStartAndLimit(t *testing.T) {
 	t.Log("Starting TestServicesStartAndLimit")
 	// call endpoint using http
 	url := "http://localhost:1323/services?created_before=4&limit=2"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 2)
-	assert.Equal(t, resp.Services[0].Id, 3)
-	assert.Equal(t, resp.Services[1].Id, 2)
+	assert.Equal(t, len(resp.Items), 2)
+	assert.Equal(t, resp.Items[0].Id, 3)
+	assert.Equal(t, resp.Items[1].Id, 2)
 	t.Log("Ok")
 }
 
@@ -126,13 +125,13 @@ func TestServicesEndAndLimit(t *testing.T) {
 	t.Log("Starting TestServicesEndAndLimit")
 	// call endpoint using http
 	url := "http://localhost:1323/services?created_after=2&limit=2"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 2)
-	assert.Equal(t, resp.Services[0].Id, 4)
-	assert.Equal(t, resp.Services[1].Id, 3)
+	assert.Equal(t, len(resp.Items), 2)
+	assert.Equal(t, resp.Items[0].Id, 4)
+	assert.Equal(t, resp.Items[1].Id, 3)
 	t.Log("Ok")
 }
 
@@ -140,12 +139,12 @@ func TestServicesFilterBy(t *testing.T) {
 	t.Log("Starting TestServicesFilterBy")
 	// call endpoint using http
 	url := "http://localhost:1323/services?filter_by=chargeback"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 1)
-	assert.Equal(t, resp.Services[0].Id, 3)
+	assert.Equal(t, len(resp.Items), 1)
+	assert.Equal(t, resp.Items[0].Id, 3)
 	t.Log("Ok")
 }
 
@@ -153,12 +152,12 @@ func TestServicesFilterByDescription(t *testing.T) {
 	t.Log("Starting TestServicesFilterBy")
 	// call endpoint using http
 	url := "http://localhost:1323/services?filter_by=test%20service"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 1)
-	assert.Equal(t, resp.Services[0].Id, 1)
+	assert.Equal(t, len(resp.Items), 1)
+	assert.Equal(t, resp.Items[0].Id, 1)
 	t.Log("Ok")
 }
 
@@ -166,11 +165,11 @@ func TestServicesFilterByDescriptionAndCreatedAfter(t *testing.T) {
 	t.Log("Starting TestServicesFilterBy")
 	// call endpoint using http
 	url := "http://localhost:1323/services?filter_by=test%20service&created_after=1"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 0)
+	assert.Equal(t, len(resp.Items), 0)
 	t.Log("Ok")
 }
 
@@ -178,13 +177,13 @@ func TestCreatedOnOrder(t *testing.T) {
 	t.Log("Starting TestCreatedOnOrder")
 	// call endpoint using http
 	url := "http://localhost:1323/services"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 4)
+	assert.Equal(t, len(resp.Items), 4)
 	previousTime := time.Now()
-	for _, s := range resp.Services {
+	for _, s := range resp.Items {
 		if s.CreatedOn.After(previousTime) {
 			assert.Fail(t, "CreatedOn order not preserved")
 		}
@@ -197,13 +196,13 @@ func TestCreatedOnOrderWithCreatedBefore(t *testing.T) {
 	t.Log("Starting TestCreatedOnOrderWithCreatedBefore")
 	// call endpoint using http
 	url := "http://localhost:1323/services?created_before=5"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
-	assert.Equal(t, len(resp.Services), 4)
+	assert.Equal(t, len(resp.Items), 4)
 	previousTime := time.Now()
-	for _, s := range resp.Services {
+	for _, s := range resp.Items {
 		if s.CreatedOn.After(previousTime) {
 			assert.Fail(t, "CreatedOn order not preserved")
 		}
@@ -215,9 +214,9 @@ func TestCreatedOnOrderWithCreatedBefore(t *testing.T) {
 func TestVersionCount(t *testing.T) {
 	t.Log("Starting TestVersionCount")
 	url := "http://localhost:1323/services"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
 	actualCountMap := map[int]int{
 		1: 4,
@@ -225,8 +224,8 @@ func TestVersionCount(t *testing.T) {
 		3: 1,
 		4: 1,
 	}
-	assert.Equal(t, len(resp.Services), 4)
-	for _, s := range resp.Services {
+	assert.Equal(t, len(resp.Items), 4)
+	for _, s := range resp.Items {
 		val, ok := actualCountMap[s.Id]
 		if !ok || val != s.VersionCount {
 			assert.Fail(t, "Version count does not match")
@@ -239,9 +238,9 @@ func TestSizeResponse(t *testing.T) {
 	t.Log("Starting TestSizeResponse")
 	// call endpoint using http
 	url := "http://localhost:1323/services?created_after=1&limit=1"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
 	assert.Equal(t, resp.Size, 3)
 	t.Log("Ok")
@@ -251,9 +250,9 @@ func TestRequestInResponse(t *testing.T) {
 	t.Log("Starting TestRequestInResponse")
 	// call endpoint using http
 	url := "http://localhost:1323/services?created_after=1&limit=1"
-	resp := &models.CatalogResponse{}
+	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
-	resp = respStruct.(*models.CatalogResponse)
+	resp = respStruct.(*models.Services)
 
 	assert.Equal(t, resp.Request.CreatedAfter, 1)
 	assert.Equal(t, resp.Request.Limit, 1)
