@@ -1,15 +1,15 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"services/models"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 func getErrorJSON(c echo.Context, err error) error {
-	fmt.Println("here with : ", err)
+	log.Info("getErrorJSON:: responding with err:", err.Error())
 	switch err.(type) {
 	case models.BadRequest:
 		be := err.(models.BadRequest)

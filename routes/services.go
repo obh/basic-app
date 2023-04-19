@@ -2,7 +2,6 @@ package routes
 
 import (
 	"errors"
-	"fmt"
 	"html"
 	"math"
 	"net/http"
@@ -26,8 +25,6 @@ const defaultFrom = 1
 const DEFAULT_LIMIT = 10
 const MAX_LIMIT = 50
 
-// /services?from=1&count=10&filterBy=test&orderBy=created_on&orderType=desc
-
 type serviceHandler struct {
 	serviceController service.ServiceController
 	validate          *validator.Validate
@@ -45,7 +42,7 @@ func InitServiceHandler(e *echo.Echo, svc service.ServiceController, v *validato
 func (h *serviceHandler) getServices(c echo.Context) error {
 	req, err := h.getReqParams(c)
 	if err != nil {
-		fmt.Println(err)
+		log.Info("getServices:: found error:", err)
 		return getErrorJSON(c,
 			models.BadRequest{BaseError: models.BaseError{ErrType: models.ErrBadRequest, Detail: err.Error()}})
 	}
@@ -53,7 +50,7 @@ func (h *serviceHandler) getServices(c echo.Context) error {
 	resp, err := h.serviceController.GetServices(c.Request().Context(), *req)
 	resp.Request = *req
 	if err != nil {
-		fmt.Println(err)
+		log.Info("getServices:: found error:", err)
 		return getErrorJSON(c, models.InternalServerError{BaseError: models.BaseError{
 			ErrType: models.ErrInternalServerError, Detail: err.Error()}})
 	}
@@ -98,6 +95,7 @@ func (h *serviceHandler) getReqParams(c echo.Context) (*models.RequestParams, er
 	}
 	err = validate(r, h.validate)
 	if err != nil {
+		log.Info("validate:: found error", err)
 		return nil, err
 	}
 	return r, nil
@@ -115,7 +113,6 @@ func extractIntParam(param string, defaultVal int, queryParams url.Values) (int,
 }
 
 func validate(r *models.RequestParams, validate *validator.Validate) error {
-	fmt.Println("calling validate: ", r)
 	match, err := regexp.MatchString(`^[a-zA-Z0-9&_ ,.\-()\/]+$`, r.FilterBy)
 	if err != nil {
 		return err

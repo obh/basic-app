@@ -27,8 +27,10 @@
 
 # Other Assumptions 
 * We assume that a service will always have atleast 1 version in serviceversions. 
-* We create a mysql index on `id` and the `created_on` field to ensure correctness of data.
+* We create a mysql index on `id` and the `created_on` field to ensure ordering is maintained in our query.
 * We also create an index on the `service_id` column in serviceversions table to improve query performance.
+* We choose sane defaults for MySQL db connections and settings in `ent`. 
+
 
 # Setup
 

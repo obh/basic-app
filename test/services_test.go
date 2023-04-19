@@ -3,7 +3,6 @@ package test
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -51,11 +50,9 @@ func ConnectDB() (*ent.Client, error) {
 
 func TestMain(m *testing.M) {
 	e := Init()
-	// start server
 	go func() {
 		_ = e.Start("localhost:1323")
 	}()
-	fmt.Println("setup done")
 	exitCode := m.Run()
 	os.Exit(exitCode)
 }
@@ -64,7 +61,6 @@ func callServicesAPI(t *testing.T, url string, resp interface{}) (int, interface
 
 	res, err := http.Get(url)
 
-	// validate no error and successful response
 	assert.NoError(t, err)
 
 	defer res.Body.Close()
@@ -79,7 +75,6 @@ func callServicesAPI(t *testing.T, url string, resp interface{}) (int, interface
 
 func TestDefaultServices(t *testing.T) {
 	t.Log("Starting TestDefaultServices")
-	// call endpoint using http
 	url := "http://localhost:1323/services"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -95,7 +90,6 @@ func TestDefaultServices(t *testing.T) {
 
 func TestServicesLimit(t *testing.T) {
 	t.Log("Starting TestServicesLimit")
-	// call endpoint using http
 	url := "http://localhost:1323/services?limit=2"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -109,7 +103,6 @@ func TestServicesLimit(t *testing.T) {
 
 func TestServicesStartAndLimit(t *testing.T) {
 	t.Log("Starting TestServicesStartAndLimit")
-	// call endpoint using http
 	url := "http://localhost:1323/services?created_before=4&limit=2"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -123,7 +116,6 @@ func TestServicesStartAndLimit(t *testing.T) {
 
 func TestServicesEndAndLimit(t *testing.T) {
 	t.Log("Starting TestServicesEndAndLimit")
-	// call endpoint using http
 	url := "http://localhost:1323/services?created_after=2&limit=2"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -137,7 +129,6 @@ func TestServicesEndAndLimit(t *testing.T) {
 
 func TestServicesFilterBy(t *testing.T) {
 	t.Log("Starting TestServicesFilterBy")
-	// call endpoint using http
 	url := "http://localhost:1323/services?filter_by=chargeback"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -150,7 +141,6 @@ func TestServicesFilterBy(t *testing.T) {
 
 func TestServicesFilterByDescription(t *testing.T) {
 	t.Log("Starting TestServicesFilterBy")
-	// call endpoint using http
 	url := "http://localhost:1323/services?filter_by=test%20service"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -163,7 +153,6 @@ func TestServicesFilterByDescription(t *testing.T) {
 
 func TestServicesFilterByDescriptionAndCreatedAfter(t *testing.T) {
 	t.Log("Starting TestServicesFilterBy")
-	// call endpoint using http
 	url := "http://localhost:1323/services?filter_by=test%20service&created_after=1"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -175,7 +164,6 @@ func TestServicesFilterByDescriptionAndCreatedAfter(t *testing.T) {
 
 func TestCreatedOnOrder(t *testing.T) {
 	t.Log("Starting TestCreatedOnOrder")
-	// call endpoint using http
 	url := "http://localhost:1323/services"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -194,7 +182,6 @@ func TestCreatedOnOrder(t *testing.T) {
 
 func TestCreatedOnOrderWithCreatedBefore(t *testing.T) {
 	t.Log("Starting TestCreatedOnOrderWithCreatedBefore")
-	// call endpoint using http
 	url := "http://localhost:1323/services?created_before=5"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -236,7 +223,6 @@ func TestVersionCount(t *testing.T) {
 
 func TestSizeResponse(t *testing.T) {
 	t.Log("Starting TestSizeResponse")
-	// call endpoint using http
 	url := "http://localhost:1323/services?created_after=1&limit=1"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
@@ -248,7 +234,6 @@ func TestSizeResponse(t *testing.T) {
 
 func TestRequestInResponse(t *testing.T) {
 	t.Log("Starting TestRequestInResponse")
-	// call endpoint using http
 	url := "http://localhost:1323/services?created_after=1&limit=1"
 	resp := &models.Services{}
 	_, respStruct := callServicesAPI(t, url, resp)
