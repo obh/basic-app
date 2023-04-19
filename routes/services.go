@@ -24,7 +24,7 @@ const limitQuery = "limit"
 const serviceIdPathParam = "id"
 const defaultFrom = 1
 const DEFAULT_LIMIT = 10
-const MAX_LIMIT = 100
+const MAX_LIMIT = 50
 
 // /services?from=1&count=10&filterBy=test&orderBy=created_on&orderType=desc
 

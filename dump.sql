@@ -39,7 +39,7 @@ CREATE TABLE `ServiceVersions` (
   `service_id` int DEFAULT NULL,
   `created_on` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `service_id` (`service_id`),
+  KEY `idx_service_id` (`service_id`),
   CONSTRAINT `serviceversions_ibfk_1` FOREIGN KEY (`service_id`) REFERENCES `Services` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
